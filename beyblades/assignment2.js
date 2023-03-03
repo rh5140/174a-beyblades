@@ -58,7 +58,9 @@ class Base_Scene extends Scene {
         this.shapes = {
             'cube': new Cube(),
             'outline': new Cube_Outline(),
-            'strip': new Cube_Single_Strip()
+            'strip': new Cube_Single_Strip(),
+            'arena': new defs.Rounded_Capped_Cylinder(30, 30),
+            'beyblade': new defs.Closed_Cone(15, 6),
         };
 
         // *** Materials
@@ -87,7 +89,7 @@ class Base_Scene extends Scene {
         if (!context.scratchpad.controls) {
             this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
             // Define the global camera and projection matrices, which are stored in program_state.
-            program_state.set_camera(Mat4.translation(5, -10, -30));
+            program_state.set_camera(Mat4.translation(0, 0, -30).times(Mat4.rotation(Math.PI/4, 1, 0, 0)));
         }
         program_state.projection_transform = Mat4.perspective(Math.PI / 4, context.width / context.height, 1, 100);
 
@@ -124,52 +126,39 @@ export class Assignment2 extends Base_Scene {
         );
     }
 
-    draw_box(context, program_state, model_transform, x_rotation, index, outlined) {
-        // TODO:  Helper function for requirement 3 (see hint).
-        //        This should make changes to the model_transform matrix, draw the next box, and return the newest model_transform.
-        // Hint:  You can add more parameters for this function, like the desired color, index of the box, etc.
-        // const blue = hex_color("#1a9ffa");
-        // Note order of transformations!
-        if (!outlined) {
-            // ODD since 0 indexed
-            if (index % 2 == 0) {
-                this.shapes.cube.draw(context, program_state, model_transform.times(Mat4.scale(1, 1.5, 1)), this.materials.plastic.override(this.colors[index]));
-            }
-            // EVEN since 0 indexed
-            else {
-                this.shapes.strip.draw(context, program_state, model_transform.times(Mat4.scale(1, 1.5, 1)), this.materials.plastic.override(this.colors[index]), this.type = "TRIANGLE_STRIP");
-            }
-            
-        }
-        else {
-            this.shapes.outline.draw(context, program_state, model_transform.times(Mat4.scale(1, 1.5, 1)), this.white, this.type = "LINES");
-        }
-        // this.shapes.cube.draw(context, program_state, model_transform, this.materials.plastic.override({color:blue}));
-        // translations originally (1,1,0) and (-1, 1, 0))
-        model_transform = model_transform.times(Mat4.translation(-1, 1.5, 0))
-            .times(Mat4.rotation(x_rotation, 0, 0, 1))
-            
-            .times(Mat4.translation(1, 1.5, 0));
-        return model_transform;
-    }
-
     theta(program_state) {
         return .025 * Math.PI + .025 * Math.PI * Math.sin(.002 * Math.PI * program_state.animation_time);
     }
 
     display(context, program_state) {
+        const t = program_state.animation_time / 1000;
+        const v1 = 3;
+        const v2 = 5;
+
         super.display(context, program_state);
         let model_transform = Mat4.identity();
+        model_transform = model_transform.times(Mat4.rotation(Math.PI / 2,1,0,0));
+        model_transform = model_transform.times(Mat4.scale(10,10,1));
         
-        if (!this.still) {
-            for (let i = 0; i < this.num_boxes; i++) {
-                model_transform = this.draw_box(context, program_state, model_transform, this.theta(program_state), i, this.outlined);                
-            }
-        } 
-        else {
-            for (let i = 0; i < this.num_boxes; i++) {
-                model_transform = this.draw_box(context, program_state, model_transform, .05 * Math.PI, i, this.outlined);
-            }
-        }   
+        this.shapes.arena.draw(context, program_state, model_transform, this.materials.plastic);
+        
+        let b1_location = Mat4.translation(5*Math.cos(v1 * t),1,5*Math.sin(v1 * t))
+                                .times(Mat4.rotation(20*t,0,1,0))
+                                .times(Mat4.rotation(Math.PI/2,1,0,0));
+        this.shapes.beyblade.draw(context, program_state, b1_location, this.materials.plastic.override({color: color(0.69, 0.420, 0.1, 1)}));
+        
+        let b2_location =  Mat4.translation(-2*Math.cos(v2 * -t),1,-2*Math.sin(v2 * -t))
+                                .times(Mat4.rotation(20*t,0,1,0))
+                                .times(Mat4.rotation(Math.PI/2,1,0,0))
+        this.shapes.beyblade.draw(context, program_state, b2_location,this.materials.plastic.override({color: color(1, 0, 0, 1)}));
+
+        // orientation cubes
+        // this.shapes.cube.draw(context, program_state, Mat4.translation(5, 0, 0), this.materials.plastic.override({color: color(1, 0, 0, 1)}));
+        // this.shapes.cube.draw(context, program_state, Mat4.translation(-5, 0, 0), this.materials.plastic);
+        // this.shapes.cube.draw(context, program_state, Mat4.translation(0, 5, 0), this.materials.plastic.override({color: color(1, 0, 0, 1)}));
+        // this.shapes.cube.draw(context, program_state, Mat4.translation(0, -5, 0), this.materials.plastic);
+
+
+
     }
 }
