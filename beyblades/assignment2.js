@@ -2,7 +2,6 @@ import {defs, tiny} from './examples/common.js';
 
 const {Vector, Vector3, vec, vec3, vec4, color, hex_color, Matrix, Mat4, Light, Shape, Material, Scene, Texture} = tiny;
 
-
 class Base_Scene extends Scene {
     /**
      *  **Base_scene** is a Scene that can be added to any display canvas.
@@ -12,14 +11,11 @@ class Base_Scene extends Scene {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
         super();
         this.still = this.outlined = false;
-        this.num_boxes = 8;
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
-            'cube': new Cube(),
-            'outline': new Cube_Outline(),
-            'strip': new Cube_Single_Strip(),
             'arena': new defs.Rounded_Capped_Cylinder(30, 30),
-            'beyblade': new defs.Closed_Cone(15, 6),
+            'cylinder' : new defs.Capped_Cylinder(1,6),
+            'cone': new defs.Closed_Cone(15, 6),
         };
 
         // *** Materials
@@ -30,14 +26,6 @@ class Base_Scene extends Scene {
                 color: hex_color("#ffffff")
             }),
         };
-        // The white material and basic shader are used for drawing the outline.
-        this.white = new Material(new defs.Basic_Shader());
-
-        // *** Colors
-        this.colors = [];
-        for (let i = 0; i < this.num_boxes; i++) {
-            this.colors[i] = color(Math.random(), Math.random(), Math.random(), 1.0);
-        }
     }
 
     display(context, program_state) {
@@ -65,16 +53,8 @@ export class Assignment2 extends Base_Scene {
      * This gives you a very small code sandbox for editing a simple scene, and for
      * experimenting with matrix transformations.
      */
-    set_colors() {
-        for (let i = 0; i < this.num_boxes; i++) {
-            this.colors[i] = color(Math.random(), Math.random(), Math.random(), 1.0);
-        }
-    }
 
     make_control_panel() {
-        // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
-        this.key_triggered_button("Change Colors", ["c"], this.set_colors);
-        // Add a button for controlling the scene.
         this.key_triggered_button("Outline", ["o"], ()=>{
             this.outlined ^= 1;
         }
@@ -85,10 +65,10 @@ export class Assignment2 extends Base_Scene {
         );
     }
 
-    theta(program_state) {
-        return .025 * Math.PI + .025 * Math.PI * Math.sin(.002 * Math.PI * program_state.animation_time);
+    draw_beyblade(context,program_state,model_transform,base,top) {
+        this.shapes.cone.draw(context,program_state,model_transform.times(Mat4.rotation(Math.PI/2,1,0,0)),base);
+        this.shapes.cylinder.draw(context,program_state,model_transform.times(Mat4.translation(0,0.5,0).times(Mat4.scale(1.5,0.4,1.5)).times(Mat4.rotation(Math.PI/2,1,0,0))),top);
     }
-
     display(context, program_state) {
         const t = program_state.animation_time / 1000;
         const v1 = 3;
@@ -100,16 +80,19 @@ export class Assignment2 extends Base_Scene {
         model_transform = model_transform.times(Mat4.scale(10,10,1));
         
         this.shapes.arena.draw(context, program_state, model_transform, this.materials.plastic);
-        
+
         let b1_location = Mat4.translation(5*Math.cos(v1 * t),1,5*Math.sin(v1 * t))
                                 .times(Mat4.rotation(20*t,0,1,0))
-                                .times(Mat4.rotation(Math.PI/2,1,0,0));
-        this.shapes.beyblade.draw(context, program_state, b1_location, this.materials.plastic.override({color: color(0.69, 0.420, 0.1, 1)}));
-        
+        this.draw_beyblade(context, program_state, b1_location,
+            this.materials.plastic.override({color : color (0.69,0.42,0.1,1)}),
+            this.materials.plastic.override({color : color (0.42,0.69,0.1,1)}));
+
+
         let b2_location =  Mat4.translation(-2*Math.cos(v2 * -t),1,-2*Math.sin(v2 * -t))
                                 .times(Mat4.rotation(20*t,0,1,0))
-                                .times(Mat4.rotation(Math.PI/2,1,0,0))
-        this.shapes.beyblade.draw(context, program_state, b2_location,this.materials.plastic.override({color: color(1, 0, 0, 1)}));
+        this.draw_beyblade(context, program_state, b2_location,
+            this.materials.plastic.override({color : color (1,0.42,0.1,1)}),
+            this.materials.plastic.override({color : color (1,0.69,0.1,1)}));
 
         // orientation cubes
         // this.shapes.cube.draw(context, program_state, Mat4.translation(5, 0, 0), this.materials.plastic.override({color: color(1, 0, 0, 1)}));
