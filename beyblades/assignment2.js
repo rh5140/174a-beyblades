@@ -32,6 +32,9 @@ class Base_Scene extends Scene {
             }),
             rings: new Material(new Ring_Shader(),),
         };
+
+        this.time = 0;
+        this.still = false;
     }
 
     display(context, program_state) {
@@ -76,7 +79,7 @@ export class Assignment2 extends Base_Scene {
         this.shapes.cylinder.draw(context,program_state,model_transform.times(Mat4.translation(0,0.5,0).times(Mat4.scale(1.5,0.4,1.5)).times(Mat4.rotation(Math.PI/2,1,0,0))),top);
     }
     display(context, program_state) {
-        const t = program_state.animation_time / 1000;
+        const t = this.time, dt = program_state.animation_delta_time / 1000;
         const v1 = 3;
         const v2 = 5;
 
@@ -87,6 +90,8 @@ export class Assignment2 extends Base_Scene {
         
         this.shapes.arena.draw(context, program_state, model_transform, this.materials.plastic);
 
+        if(!this.still)
+            this.time += dt;
         let b1_location = Mat4.translation(5*Math.cos(v1 * t),1,5*Math.sin(v1 * t))
                                 .times(Mat4.rotation(20*t,0,1,0))
         this.draw_beyblade(context, program_state, b1_location,
