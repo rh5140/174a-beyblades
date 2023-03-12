@@ -25,6 +25,11 @@ class Base_Scene extends Scene {
                 diffusivity: .6,
                 color: hex_color("#ffffff")
             }),
+            star_texture: new Material(new defs.Textured_Phong(), {
+                color: color(0,0,0,1),
+                ambient: 1, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/stars.png","NEAREST")
+            }),
         };
     }
 
@@ -92,7 +97,7 @@ export class Assignment2 extends Base_Scene {
                                 .times(Mat4.rotation(20*t,0,1,0))
         this.draw_beyblade(context, program_state, b2_location,
             this.materials.plastic.override({color : color (1,0.42,0.1,1)}),
-            this.materials.plastic.override({color : color (1,0.69,0.1,1)}));
+            this.materials.star_texture);
 
         // orientation cubes
         // this.shapes.cube.draw(context, program_state, Mat4.translation(5, 0, 0), this.materials.plastic.override({color: color(1, 0, 0, 1)}));
