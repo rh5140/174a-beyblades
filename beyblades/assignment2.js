@@ -1,6 +1,6 @@
 import {defs, tiny} from './examples/common.js';
 
-const {Vector, Vector3, vec, vec3, vec4, color, hex_color, Matrix, Mat4, Light, Shape, Material, Scene, Texture} = tiny;
+const {Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene, Texture} = tiny;
 
 class Base_Scene extends Scene {
     /**
@@ -30,6 +30,7 @@ class Base_Scene extends Scene {
                 ambient: 1, diffusivity: 0.1, specularity: 0.1,
                 texture: new Texture("assets/stars.png","NEAREST")
             }),
+            rings: new Material(new Ring_Shader(),),
         };
     }
 
@@ -90,7 +91,7 @@ export class Assignment2 extends Base_Scene {
                                 .times(Mat4.rotation(20*t,0,1,0))
         this.draw_beyblade(context, program_state, b1_location,
             this.materials.plastic.override({color : color (0.69,0.42,0.1,1)}),
-            this.materials.plastic.override({color : color (0.42,0.69,0.1,1)}));
+            this.materials.rings);
 
 
         let b2_location =  Mat4.translation(-2*Math.cos(v2 * -t),1,-2*Math.sin(v2 * -t))
@@ -99,13 +100,52 @@ export class Assignment2 extends Base_Scene {
             this.materials.plastic.override({color : color (1,0.42,0.1,1)}),
             this.materials.star_texture);
 
-        // orientation cubes
-        // this.shapes.cube.draw(context, program_state, Mat4.translation(5, 0, 0), this.materials.plastic.override({color: color(1, 0, 0, 1)}));
-        // this.shapes.cube.draw(context, program_state, Mat4.translation(-5, 0, 0), this.materials.plastic);
-        // this.shapes.cube.draw(context, program_state, Mat4.translation(0, 5, 0), this.materials.plastic.override({color: color(1, 0, 0, 1)}));
-        // this.shapes.cube.draw(context, program_state, Mat4.translation(0, -5, 0), this.materials.plastic);
 
 
+    }
+}
 
+class Ring_Shader extends Shader {
+    update_GPU(context, gpu_addresses, graphics_state, model_transform, material) {
+        // update_GPU():  Defining how to synchronize our JavaScript's variables to the GPU's:
+        const [P, C, M] = [graphics_state.projection_transform, graphics_state.camera_inverse, model_transform],
+            PCM = P.times(C).times(M);
+        context.uniformMatrix4fv(gpu_addresses.model_transform, false, Matrix.flatten_2D_to_1D(model_transform.transposed()));
+        context.uniformMatrix4fv(gpu_addresses.projection_camera_model_transform, false,
+            Matrix.flatten_2D_to_1D(PCM.transposed()));
+    }
+
+    shared_glsl_code() {
+        // ********* SHARED CODE, INCLUDED IN BOTH SHADERS *********
+        return `
+        precision mediump float;
+        varying vec4 point_position;
+        varying vec4 center;
+        `;
+    }
+
+    vertex_glsl_code() {
+        // ********* VERTEX SHADER *********
+        // TODO:  Complete the main function of the vertex shader (Extra Credit Part II).
+        return this.shared_glsl_code() + `
+        attribute vec3 position;
+        uniform mat4 model_transform;
+        uniform mat4 projection_camera_model_transform;
+        
+        void main(){
+            gl_Position = projection_camera_model_transform * vec4(position, 1.0);
+            center = model_transform * vec4(0.0,0.0,0.0,1.0);
+            point_position = model_transform * vec4(position, 1.0);
+        }`;
+    }
+
+    fragment_glsl_code() {
+        // ********* FRAGMENT SHADER *********
+        // TODO:  Complete the main function of the fragment shader (Extra Credit Part II).
+        return this.shared_glsl_code() + `
+        void main(){
+            float factor = sin(20.0 * distance(center.xyz, point_position.xyz));
+            gl_FragColor = factor * vec4(0.980, 0.788, 0.101, 1.0);
+        }`;
     }
 }
