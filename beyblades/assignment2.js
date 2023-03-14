@@ -65,10 +65,6 @@ export class Assignment2 extends Base_Scene {
      */
 
     make_control_panel() {
-        this.key_triggered_button("Outline", ["o"], ()=>{
-            this.outlined ^= 1;
-        }
-        );
         this.key_triggered_button("Sit still", ["m"], ()=>{
             this.still ^= 1;
         }
@@ -84,6 +80,15 @@ export class Assignment2 extends Base_Scene {
         this.shapes.cone.draw(context,program_state,model_transform.times(Mat4.rotation(Math.PI/2,1,0,0)),base);
         this.shapes.cylinder.draw(context,program_state,model_transform.times(Mat4.translation(0,0.5,0).times(Mat4.scale(1.5,0.4,1.5)).times(Mat4.rotation(Math.PI/2,1,0,0))),top);
     }
+
+    is_colliding(b1_location, b2_location, threshold) {
+        //threshold should be 1.5
+        let v = b1_location.minus(b2_location);
+        if(v.norm() <= threshold)
+            return true;
+        return false;
+    }
+
     display(context, program_state) {
         const t = this.time, dt = program_state.animation_delta_time / 1000;
         const v1 = 3;
@@ -91,7 +96,7 @@ export class Assignment2 extends Base_Scene {
 
         const v_y = 9.8;
 
-        let b1_y_trans = 1;
+        let b1_y_trans = 1.5;
 
         super.display(context, program_state);
         let model_transform = Mat4.identity();
@@ -103,33 +108,29 @@ export class Assignment2 extends Base_Scene {
         if(!this.still)
             this.time += dt;
 
-            
         if (this.b1_jumping)
         {
             this.b1_jump_duration += dt;
             b1_y_trans = 1+ v_y * this.b1_jump_duration - 4.9 * this.b1_jump_duration*this.b1_jump_duration;
         }
-
+        if (Math.abs(this.b1_jump_duration - 2) <= 0.001)
+        {
+            this.b1_jumping = false;
+            this.b1_jump_duration = 0;
+        }
         let b1_transform = Mat4.translation(5*Math.cos(v1 * t),b1_y_trans,5*Math.sin(v1 * t))
                                 .times(Mat4.rotation(20*t,0,1,0));
         this.draw_beyblade(context, program_state, b1_transform,
             this.materials.plastic.override({color : color (0.69,0.42,0.1,1)}),
             this.materials.rings);
-        let b1_location = b1_transform.times(vec4(0,0,0,1));
-        if (Math.abs(this.b1_jump_duration - 2) <= 0.001)
-        {
-            console.log(b1_location[1]);
-            this.b1_jumping = false;
-            //b1_location[1][3] = 1;
-            this.b1_jump_duration = 0;
-        }
 
-        let b2_location =  Mat4.translation(-2*Math.cos(v2 * -t),1,-2*Math.sin(v2 * -t))
+
+        let b2_location =  Mat4.translation(-2*Math.cos(v2 * -t),1.5,-2*Math.sin(v2 * -t))
                                 .times(Mat4.rotation(20*t,0,1,0));
         this.draw_beyblade(context, program_state, b2_location,
             this.materials.plastic.override({color : color (1,0.42,0.1,1)}),
             this.materials.star_texture);
-
+        
 
 
     }
