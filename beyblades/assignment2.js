@@ -74,7 +74,8 @@ export class Assignment2 extends Base_Scene {
         }
         );
         this.key_triggered_button("B1 Jump", ["j"], ()=>{
-            this.b1_jumping ^= 1;
+            if(this.b1_jump_duration == 0)
+                this.b1_jumping ^= 1;
         }
         );
     }
@@ -88,7 +89,7 @@ export class Assignment2 extends Base_Scene {
         const v1 = 3;
         const v2 = 5;
 
-        const v_y = 7;
+        const v_y = 9.8;
 
         let b1_y_trans = 1;
 
@@ -106,20 +107,20 @@ export class Assignment2 extends Base_Scene {
         if (this.b1_jumping)
         {
             this.b1_jump_duration += dt;
-            const mod_t = t % (v_y / 4.9);
-            b1_y_trans = v_y * mod_t - 4.9 * mod_t * mod_t;
+            b1_y_trans = 1+ v_y * this.b1_jump_duration - 4.9 * this.b1_jump_duration*this.b1_jump_duration;
         }
 
-        let b1_location = Mat4.translation(5*Math.cos(v1 * t),b1_y_trans,5*Math.sin(v1 * t))
+        let b1_transform = Mat4.translation(5*Math.cos(v1 * t),b1_y_trans,5*Math.sin(v1 * t))
                                 .times(Mat4.rotation(20*t,0,1,0));
-        this.draw_beyblade(context, program_state, b1_location,
+        this.draw_beyblade(context, program_state, b1_transform,
             this.materials.plastic.override({color : color (0.69,0.42,0.1,1)}),
             this.materials.rings);
-        
-        if (this.b1_jump_duration >= (v_y / 4.9) || b1_location[1][3] < 1)
+        let b1_location = b1_transform.times(vec4(0,0,0,1));
+        if (Math.abs(this.b1_jump_duration - 2) <= 0.001)
         {
+            console.log(b1_location[1]);
             this.b1_jumping = false;
-            b1_location[1][3] = 1;
+            //b1_location[1][3] = 1;
             this.b1_jump_duration = 0;
         }
 
