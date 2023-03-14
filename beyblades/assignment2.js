@@ -10,7 +10,6 @@ class Base_Scene extends Scene {
     constructor() {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
         super();
-        this.still = this.outlined = false;
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
             'arena': new defs.Rounded_Capped_Cylinder(30, 30),
@@ -35,6 +34,8 @@ class Base_Scene extends Scene {
 
         this.time = 0;
         this.still = false;
+        this.b1_jumping = false;
+        this.b1_jump_duration = 0;
     }
 
     display(context, program_state) {
@@ -72,6 +73,10 @@ export class Assignment2 extends Base_Scene {
             this.still ^= 1;
         }
         );
+        this.key_triggered_button("B1 Jump", ["j"], ()=>{
+            this.b1_jumping ^= 1;
+        }
+        );
     }
 
     draw_beyblade(context,program_state,model_transform,base,top) {
@@ -83,6 +88,10 @@ export class Assignment2 extends Base_Scene {
         const v1 = 3;
         const v2 = 5;
 
+        const v_y = 7;
+
+        let b1_y_trans = 1;
+
         super.display(context, program_state);
         let model_transform = Mat4.identity();
         model_transform = model_transform.times(Mat4.rotation(Math.PI / 2,1,0,0));
@@ -92,15 +101,30 @@ export class Assignment2 extends Base_Scene {
 
         if(!this.still)
             this.time += dt;
-        let b1_location = Mat4.translation(5*Math.cos(v1 * t),1,5*Math.sin(v1 * t))
-                                .times(Mat4.rotation(20*t,0,1,0))
+
+            
+        if (this.b1_jumping)
+        {
+            this.b1_jump_duration += dt;
+            const mod_t = t % (v_y / 4.9);
+            b1_y_trans = v_y * mod_t - 4.9 * mod_t * mod_t;
+        }
+
+        let b1_location = Mat4.translation(5*Math.cos(v1 * t),b1_y_trans,5*Math.sin(v1 * t))
+                                .times(Mat4.rotation(20*t,0,1,0));
         this.draw_beyblade(context, program_state, b1_location,
             this.materials.plastic.override({color : color (0.69,0.42,0.1,1)}),
             this.materials.rings);
-
+        
+        if (this.b1_jump_duration >= (v_y / 4.9) || b1_location[1][3] < 1)
+        {
+            this.b1_jumping = false;
+            b1_location[1][3] = 1;
+            this.b1_jump_duration = 0;
+        }
 
         let b2_location =  Mat4.translation(-2*Math.cos(v2 * -t),1,-2*Math.sin(v2 * -t))
-                                .times(Mat4.rotation(20*t,0,1,0))
+                                .times(Mat4.rotation(20*t,0,1,0));
         this.draw_beyblade(context, program_state, b2_location,
             this.materials.plastic.override({color : color (1,0.42,0.1,1)}),
             this.materials.star_texture);
