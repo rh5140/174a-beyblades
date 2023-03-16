@@ -185,7 +185,7 @@ export class Assignment2 extends Base_Scene {
             this.b2_collision.neg_z = dz > 0 ? -1 : 1;
         }
 
-        if(this.b1_collision.on) {
+        if(this.b1_collision.on && !this.still) {
             let mult1 = this.b1_collision.mult(t, this.b1_collision.start);
             let a1 = this.b1_collision.angle;
             let mult2 = this.b2_collision.mult(t, this.b2_collision.start);
@@ -208,6 +208,15 @@ export class Assignment2 extends Base_Scene {
                                             .times(Mat4.translation(mult2 * this.b2_collision.neg_x * Math.cos(a2), 0, mult1 * this.b2_collision.neg_z * Math.sin(a2)));
             }
         }
+        // else if(!this.is_colliding(b1_location, b2_location) && !this.b1_collision.mat.equals(Mat4.identity())) {
+        //         // gravity towards the center (pushing the beyblades inwards constantly)
+        //         let b1_ctr = this.b1_collision.mat.times(vec4(1, 1, 1, 1));
+        //         let b2_ctr = this.b2_collision.mat.times(vec4(1, 1, 1, 1));
+        //         let g_factor = 0.9;
+
+        //         this.b1_collision.mat = Mat4.translation(b1_ctr[0] * g_factor, 0, b1_ctr[2] * g_factor);
+        //         this.b2_collision.mat = Mat4.translation(b2_ctr[0] * g_factor, 0, b2_ctr[2] * g_factor);
+        // }
 
         let b1_transform = b1_translation.times(Mat4.rotation(20*t,0,1,0));
 
