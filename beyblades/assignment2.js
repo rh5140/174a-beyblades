@@ -36,6 +36,43 @@ class Base_Scene extends Scene {
         this.still = false;
         this.b1_jumping = false;
         this.b1_jump_duration = 0;
+
+        // i only commented b2 for some reason
+        this.b1_collision = { 
+            on: false, 
+            mat: Mat4.identity(), 
+            angle: 0,
+            start: 0,
+            neg_x: 1,
+            neg_z: 1,
+            mult: (t_cur, t_start = 0, collision_time = 0.1, collision_multiplier = 0.08) => {
+                if(t_cur - t_start > collision_time) {
+                    return -1;
+                }
+
+                return collision_multiplier * Math.log2((t_cur - t_start) / collision_time + 1) + collision_multiplier;
+            } 
+        };
+
+        this.b2_collision = { 
+            on: false,  // whether a collision animation is occuring
+            mat: Mat4.identity(),   // this matrix represents the translation due to collision (but in reality it's just the translation to the new center of rotation)
+            angle: 0,
+            start: 0,   // start time of the collision
+            neg_x: 1,   // whether to go in positive or negative x direction on collision
+            neg_z: 1,   // whether to go in positive or negative z direction on collision
+            mult: (t_cur, t_start = 0, collision_time = 0.2, collision_multiplier = 0.08) => {  // these parameters seemed to just work
+                // collision_time = length of collision movement in seconds
+                // collision_multiplier = how strong the collision should be
+
+                // if we have surpassed the collision_time, return an indicator that we no longer are in a collision state
+                if(t_cur - t_start > collision_time) {
+                    return -1;
+                }
+
+                return collision_multiplier * Math.log2((t_cur - t_start) / collision_time + 1) + collision_multiplier;
+            } 
+        };
     }
 
     display(context, program_state) {
@@ -81,8 +118,8 @@ export class Assignment2 extends Base_Scene {
         this.shapes.cylinder.draw(context,program_state,model_transform.times(Mat4.translation(0,0.5,0).times(Mat4.scale(1.5,0.4,1.5)).times(Mat4.rotation(Math.PI/2,1,0,0))),top);
     }
 
-    is_colliding(b1_location, b2_location, threshold) {
-        //threshold should be 1.5
+    is_colliding(b1_location, b2_location, threshold=3) {
+        //threshold should be 1.5 + 1.5 = 3 since the radii are 1.5
         let v = b1_location.minus(b2_location);
         if(v.norm() <= threshold)
             return true;
@@ -118,21 +155,71 @@ export class Assignment2 extends Base_Scene {
             this.b1_jumping = false;
             this.b1_jump_duration = 0;
         }
-        let b1_transform = Mat4.translation(5*Math.cos(v1 * t),b1_y_trans,5*Math.sin(v1 * t))
-                                .times(Mat4.rotation(20*t,0,1,0));
+
+        // lol we should've made a beyblade object so we wouldn't be copy pasting code..
+        let b1_translation = Mat4.translation(3*Math.cos(v1 * t),b1_y_trans,2*Math.sin(v1 * t));
+        b1_translation = b1_translation.times(this.b1_collision.mat);
+        let b1_location = b1_translation.times(vec4(1, 1, 1, 1));
+        
+        let b2_translation = Mat4.translation(-2*Math.cos(v2 * -t),1.5,-Math.sin(v2 * -t));
+        b2_translation = b2_translation.times(this.b2_collision.mat);
+        let b2_location = b2_translation.times(vec4(1, 1, 1, 1));
+        
+
+        // collision detection (move to new function?)
+        if(this.is_colliding(b1_location, b2_location)) {
+            let dx = b1_location[0] - b2_location[0];   // distance in x between the two blades
+            let dz = b1_location[2] - b2_location[2];   // distance in z between the two blades
+            let a = Math.atan(dz / dx);                 // angle of collision
+
+            this.b1_collision.start = t;
+            this.b1_collision.on = true;
+            this.b1_collision.angle = a;
+            this.b1_collision.neg_x = dx > 0 ? 1 : -1;
+            this.b1_collision.neg_z = dz > 0 ? 1 : -1;
+
+            this.b2_collision.start = t;
+            this.b2_collision.on = true;
+            this.b2_collision.angle = a;
+            this.b2_collision.neg_x = dx > 0 ? -1 : 1;
+            this.b2_collision.neg_z = dz > 0 ? -1 : 1;
+        }
+
+        if(this.b1_collision.on) {
+            let mult1 = this.b1_collision.mult(t, this.b1_collision.start);
+            let a1 = this.b1_collision.angle;
+            let mult2 = this.b2_collision.mult(t, this.b2_collision.start);
+            let a2 = this.b2_collision.angle;
+
+            if(mult1 === -1) {
+                this.b1_collision.on = false;
+            }
+            else {
+                // continue moving the center of rotation due to a collision
+                this.b1_collision.mat = this.b1_collision.mat
+                                            .times(Mat4.translation(mult1 * this.b1_collision.neg_x * Math.cos(a1), 0, mult1 * this.b1_collision.neg_z * Math.sin(a1)));
+            }
+
+            if(mult2 === -1) {
+                this.b2_collision.on = false;
+            }
+            else {
+                this.b2_collision.mat = this.b2_collision.mat
+                                            .times(Mat4.translation(mult2 * this.b2_collision.neg_x * Math.cos(a2), 0, mult1 * this.b2_collision.neg_z * Math.sin(a2)));
+            }
+        }
+
+        let b1_transform = b1_translation.times(Mat4.rotation(20*t,0,1,0));
+
+        let b2_transform =  b2_translation.times(Mat4.rotation(20*t,0,1,0));
+
         this.draw_beyblade(context, program_state, b1_transform,
             this.materials.plastic.override({color : color (0.69,0.42,0.1,1)}),
             this.materials.rings);
 
-
-        let b2_location =  Mat4.translation(-2*Math.cos(v2 * -t),1.5,-2*Math.sin(v2 * -t))
-                                .times(Mat4.rotation(20*t,0,1,0));
-        this.draw_beyblade(context, program_state, b2_location,
+        this.draw_beyblade(context, program_state, b2_transform,
             this.materials.plastic.override({color : color (1,0.42,0.1,1)}),
             this.materials.star_texture);
-        
-
-
     }
 }
 
