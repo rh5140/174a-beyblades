@@ -61,7 +61,7 @@ class Base_Scene extends Scene {
             start: 0,   // start time of the collision
             neg_x: 1,   // whether to go in positive or negative x direction on collision
             neg_z: 1,   // whether to go in positive or negative z direction on collision
-            mult: (t_cur, t_start = 0, collision_time = 0.2, collision_multiplier = 0.08) => {  // these parameters seemed to just work
+            mult: (t_cur, t_start = 0, collision_time = 0.3, collision_multiplier = 0.1) => {  // these parameters seemed to just work
                 // collision_time = length of collision movement in seconds
                 // collision_multiplier = how strong the collision should be
 
@@ -159,13 +159,12 @@ export class Assignment2 extends Base_Scene {
         // lol we should've made a beyblade object so we wouldn't be copy pasting code..
         let b1_translation = Mat4.translation(3*Math.cos(v1 * t),b1_y_trans,2*Math.sin(v1 * t));
         b1_translation = b1_translation.times(this.b1_collision.mat);
-        let b1_location = b1_translation.times(vec4(1, 1, 1, 1));
+        let b1_location = b1_translation.times(vec4(0, 0, 0, 1));
         
         let b2_translation = Mat4.translation(-2*Math.cos(v2 * -t),1.5,-Math.sin(v2 * -t));
         b2_translation = b2_translation.times(this.b2_collision.mat);
-        let b2_location = b2_translation.times(vec4(1, 1, 1, 1));
+        let b2_location = b2_translation.times(vec4(0, 0, 0, 1));
         
-
         // collision detection (move to new function?)
         if(this.is_colliding(b1_location, b2_location)) {
             let dx = b1_location[0] - b2_location[0];   // distance in x between the two blades
@@ -208,15 +207,15 @@ export class Assignment2 extends Base_Scene {
                                             .times(Mat4.translation(mult2 * this.b2_collision.neg_x * Math.cos(a2), 0, mult1 * this.b2_collision.neg_z * Math.sin(a2)));
             }
         }
-        // else if(!this.is_colliding(b1_location, b2_location) && !this.b1_collision.mat.equals(Mat4.identity())) {
-        //         // gravity towards the center (pushing the beyblades inwards constantly)
-        //         let b1_ctr = this.b1_collision.mat.times(vec4(1, 1, 1, 1));
-        //         let b2_ctr = this.b2_collision.mat.times(vec4(1, 1, 1, 1));
-        //         let g_factor = 0.9;
+        else if(!this.is_colliding(b1_location, b2_location) && !this.b1_collision.mat.equals(Mat4.identity())) {
+            // gravity towards the center (pushing the beyblades inwards constantly)
+            let b1_ctr = this.b1_collision.mat.times(vec4(0, 0, 0, 1));
+            let b2_ctr = this.b2_collision.mat.times(vec4(0, 0, 0, 1));
+            let g_factor = 0.99;
 
-        //         this.b1_collision.mat = Mat4.translation(b1_ctr[0] * g_factor, 0, b1_ctr[2] * g_factor);
-        //         this.b2_collision.mat = Mat4.translation(b2_ctr[0] * g_factor, 0, b2_ctr[2] * g_factor);
-        // }
+            this.b1_collision.mat = Mat4.translation(b1_ctr[0] * g_factor, 0, b1_ctr[2] * g_factor);
+            this.b2_collision.mat = Mat4.translation(b2_ctr[0] * g_factor, 0, b2_ctr[2] * g_factor);
+        }
 
         let b1_transform = b1_translation.times(Mat4.rotation(20*t,0,1,0));
 
