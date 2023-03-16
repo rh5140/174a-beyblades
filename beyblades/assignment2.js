@@ -207,7 +207,7 @@ export class Assignment2 extends Base_Scene {
                                             .times(Mat4.translation(mult2 * this.b2_collision.neg_x * Math.cos(a2), 0, mult1 * this.b2_collision.neg_z * Math.sin(a2)));
             }
         }
-        else if(!this.is_colliding(b1_location, b2_location) && !this.b1_collision.mat.equals(Mat4.identity())) {
+        else if(!this.is_colliding(b1_location, b2_location) && !this.b1_collision.mat.equals(Mat4.identity()) && !this.still) {
             // gravity towards the center (pushing the beyblades inwards constantly)
             let b1_ctr = this.b1_collision.mat.times(vec4(0, 0, 0, 1));
             let b2_ctr = this.b2_collision.mat.times(vec4(0, 0, 0, 1));
