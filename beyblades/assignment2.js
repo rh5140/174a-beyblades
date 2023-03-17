@@ -88,14 +88,14 @@ class arena{
         this.still = true;
         this.jumping = false;
         this.jump_duration = 0;
-        this.v_y = 5;
+        this.v_y = 10;
         this.g = 30;
     }
 
     update(dt)
     {
         if(!this.still) {
-            let arena_y_trans = 1.5;
+            let arena_y_trans = 0;
             if (this.jumping) {
                 this.jump_duration += dt;
                 arena_y_trans += this.v_y * this.jump_duration - this.g / 2 * Math.pow(this.jump_duration, 2);
@@ -106,14 +106,13 @@ class arena{
             }
 
             this.time += dt;
-            let t = this.time;
 
             let arena_trans = Mat4.translation(
                 0,
                 arena_y_trans,
                 0);
 
-
+            this.y = arena_y_trans;
             this.transform = arena_trans;
         }
     }
@@ -130,7 +129,7 @@ class beyblade{
         this.jumping = false;
         this.isplayer = player;
         this.jump_duration = 0;
-        this.v_y = 10;
+        this.v_y = 15;
         this.g = 30;
         this.out_of_bounds = false;
         this.collision = {
@@ -146,7 +145,7 @@ class beyblade{
         this.crash.src = 'assets/crash.mp3';
     }
 
-    update(collider,dt)
+    update(collider,dt,arena)
     {
         if(!this.still)
         {
@@ -157,15 +156,20 @@ class beyblade{
             else
             {
                 let b_y_trans = 1.5;
+                
                 if (this.jumping)
                 {
                     this.jump_duration += dt;
                     b_y_trans += this.v_y * this.jump_duration - this.g/2 * Math.pow(this.jump_duration,2);
                 }
-                if (this.jump_duration > 2*this.v_y/this.g)
+                if (b_y_trans <= 1.5)
                 {
+                    b_y_trans = 1.5;
                     this.jumping = false;
                     this.jump_duration = 0;
+                }
+                if(b_y_trans <= arena.y + 1.5) {
+                    b_y_trans = arena.y + 1.5;
                 }
 
                 this.time += dt;
@@ -233,22 +237,26 @@ export class Assignment2 extends Base_Scene {
             for(let i = 0; i < this.beyblades.length; i++){
                 this.beyblades[i].still ^= 1;
             }
+            this.beyarena.still ^= 1;
             this.bgm.play();
         }
         );
         this.key_triggered_button("B1 Jump", ["j"], ()=> {
                 for (let i = 0; i < this.beyblades.length; i++) {
-                    if (this.beyblades[i].isplayer && !this.beyblades[i].jumping)
+                    if (this.beyblades[i].isplayer && !this.beyblades[i].jumping && !this.beyblades[i].still)
                         this.beyblades[i].jumping ^= 1;
                 }
             }
         );
         this.key_triggered_button("Arena Jump", ["h"], ()=> {
-                if (!this.beyarena.jumping)
-                    this.beyarena.jumping ^= 1;
-                for (let i = 0; i < this.beyblades.length; i++) {
-                    if (!this.beyblades[i].jumping)
-                        this.beyblades[i].jumping ^= 1;
+                if(!this.beyarena.still) {
+                    if (!this.beyarena.jumping) {
+                        this.beyarena.jumping ^= 1;
+                        for (let i = 0; i < this.beyblades.length; i++) {
+                            if (!this.beyblades[i].jumping)
+                                this.beyblades[i].jumping ^= 1;
+                        }
+                    }
                 }
             }
         );
@@ -316,6 +324,10 @@ export class Assignment2 extends Base_Scene {
     }
 
     draw_arena(context,program_state,model_transform,texture) {
+        if (this.beyarena.jumping) {
+            console.log(model_transform);
+
+        }
         model_transform = model_transform.times(Mat4.rotation(Math.PI / 2,1,0,0));
         model_transform = model_transform.times(Mat4.scale(10,10,1));
         this.shapes.arena.draw(context,program_state,model_transform,texture);
@@ -326,6 +338,9 @@ export class Assignment2 extends Base_Scene {
 
         super.display(context, program_state);
 
+        this.draw_arena(context, program_state, this.beyarena.transform, this.materials.rock_texture);
+        this.beyarena.update(dt);
+
         for(let i = 0; i < this.beyblades.length; i++)
         {
             this.draw_beyblade(context,program_state,this.beyblades[i].transform,
@@ -333,11 +348,8 @@ export class Assignment2 extends Base_Scene {
                 this.beyblades[i].materials.top);
 
             let collider = this.beyblades[1-i].transform.times(vec4(0,0,0,1));
-            this.beyblades[i].update(collider,dt);
+            this.beyblades[i].update(collider,dt,this.beyarena);
         }
-
-        this.draw_arena(context, program_state, this.beyarena.transform, this.materials.rock_texture);
-        this.beyarena.update(dt);
 
         this.fire_transform = this.fire_transform.times(Mat4.rotation(dt * Math.PI / 6, 0, 1, 0));
         this.shapes.background.draw(context, program_state, this.fire_transform, this.materials.fire_texture);
