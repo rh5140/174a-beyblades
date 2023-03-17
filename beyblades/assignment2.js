@@ -58,8 +58,16 @@ class Base_Scene extends Scene {
 
         this.fire_transform = Mat4.scale(50,50,50);
 
-        this.bgm = new Audio();
-        this.bgm.src = 'assets/turbo.mp3';
+        this.audio = {
+            bgm: new Audio(),
+            crash: new Audio(),
+        }
+        this.audio.crash.src = 'assets/crash.mp3';
+        this.audio.bgm.src = 'assets/turbo.mp3';
+
+        Object.keys(this.audio).forEach((key) => {
+            this.audio[key].volume = 0.5;
+        });
     }
 
     display(context, program_state) {
@@ -140,12 +148,9 @@ class beyblade{
             multiplier: 0.08, //logarithmic multiplier for collision distance
             matrix: Mat4.identity(), //center of rotation (e.g. originally (0,0,0,1) )
         };
-
-        this.crash = new Audio();
-        this.crash.src = 'assets/crash.mp3';
     }
 
-    update(collider,dt,arena)
+    update(collider,dt,arena,crash)
     {
         if(!this.still)
         {
@@ -191,7 +196,7 @@ class beyblade{
                     if(this.time > 3)
                         this.collision.multiplier = Math.random()*0.3 + 0.08;
 
-                    this.crash.play();
+                    crash.play();
                 }
                 if(this.collision.on && !this.still) {
                     if(this.collision.duration > this.collision.max_duration){
@@ -238,7 +243,7 @@ export class Assignment2 extends Base_Scene {
                 this.beyblades[i].still ^= 1;
             }
             this.beyarena.still ^= 1;
-            this.bgm.play();
+            this.audio.bgm.play();
         }
         );
         this.key_triggered_button("B1 Jump", ["j"], ()=> {
@@ -327,6 +332,26 @@ export class Assignment2 extends Base_Scene {
             if(R[2] < 2)
                 R[2] = Math.min(1, R[2] + 0.01);
         });
+        this.new_line();
+
+        this.key_triggered_button("Volume-", ["v"], ()=>{
+            Object.keys(this.audio).forEach((key) => {
+                let V = this.audio[key].volume;
+                if(V > 0)
+                    this.audio[key].volume = Math.min(1, V - 0.01);
+            });
+         });
+         const vol_controls = this.control_panel.appendChild(document.createElement("span"));
+         this.live_string(box => {
+             box.textContent = "Volume: "+ this.audio.bgm.volume.toFixed(2);
+         }, vol_controls);
+         this.key_triggered_button("Volume+", ["b"], ()=>{
+            Object.keys(this.audio).forEach((key) => {
+                let V = this.audio[key].volume;
+                if(V < 1)
+                    this.audio[key].volume = Math.min(1, V + 0.01);
+            });
+         });        
     }
 
     draw_beyblade(context,program_state,model_transform,base,top) {
@@ -355,7 +380,7 @@ export class Assignment2 extends Base_Scene {
                 this.beyblades[i].materials.top);
 
             let collider = this.beyblades[1-i].transform.times(vec4(0,0,0,1));
-            this.beyblades[i].update(collider,dt,this.beyarena);
+            this.beyblades[i].update(collider,dt,this.beyarena,this.audio.crash);
         }
 
         this.fire_transform = this.fire_transform.times(Mat4.rotation(dt * Math.PI / 6, 0, 1, 0));
