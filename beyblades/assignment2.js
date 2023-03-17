@@ -250,10 +250,9 @@ export class Assignment2 extends Base_Scene {
         );
         
         this.key_triggered_button("B2 Jump", ["c"], ()=> {
-                for (let i = 0; i < this.beyblades.length; i++) {
-                    if (!this.beyblades[i].isplayer && !this.beyblades[i].jumping && !this.beyblades[i].still)
-                        this.beyblades[i].jumping ^= 1;
-                    }
+            for (let i = 0; i < this.beyblades.length; i++) {
+                if (!this.beyblades[i].isplayer && !this.beyblades[i].jumping && !this.beyblades[i].still)
+                    this.beyblades[i].jumping ^= 1;
                 }
             }
         );
@@ -335,10 +334,6 @@ export class Assignment2 extends Base_Scene {
     }
 
     draw_arena(context,program_state,model_transform,texture) {
-        if (this.beyarena.jumping) {
-            console.log(model_transform);
-
-        }
         model_transform = model_transform.times(Mat4.rotation(Math.PI / 2,1,0,0));
         model_transform = model_transform.times(Mat4.scale(10,10,1));
         this.shapes.arena.draw(context,program_state,model_transform,texture);
