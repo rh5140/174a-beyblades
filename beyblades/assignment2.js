@@ -75,10 +75,10 @@ class Base_Scene extends Scene {
         };
 
         this.beyblades = [new beyblade(
-            this.materials.plastic, this.materials.plastic,3,2,5,20,true
+            this.materials.plastic.override({color: color(0.69,0.42,0.1,1)}), this.materials.star_texture,3,2,5,20,true
         ),
         new beyblade(
-             this.materials.plastic, this.materials.plastic,2,-1,3,-20,false
+             this.materials.plastic.override({color: color(0.42,0.69,1,1)}), this.materials.rings,2,-1,3,-20,false
         )]
     }
 
@@ -116,11 +116,11 @@ class beyblade{
         this.g = 30
         this.collision = {
             on: false,
-            direction: vec4(0,0,0,0),
-            duration: 0,
-            max_duration: 0.1,
-            multiplier: 0.08,
-            matrix: Mat4.identity(),
+            direction: vec4(0,0,0,0), //the direction of collision, the center of rotation will be moving along this
+            duration: 0, //time since collision
+            max_duration: 0.1, //max time for collision
+            multiplier: 0.08, //logarithmic multiplier for collision distance
+            matrix: Mat4.identity(), //center of rotation (e.g. originally (0,0,0,1) )
         };
     }
 
@@ -172,7 +172,7 @@ class beyblade{
                     ));
                 }
             }
-            else if(!iscolliding && !this.collision.matrix.equals(Mat4.identity())) {
+            else if(!iscolliding) {
                 // gravity towards the center (pushing the beyblades inwards constantly)
                 let ctr = this.collision.matrix.times(vec4(0, 0, 0, 1));
                 let g_factor = 0.99;
@@ -248,93 +248,6 @@ export class Assignment2 extends Base_Scene {
         model_transform = model_transform.times(Mat4.scale(10,10,1));
         
         this.shapes.arena.draw(context, program_state, model_transform, this.materials.plastic);
-
-        if(!this.still)
-            this.time += dt;
-
-        if (this.b1_jumping)
-        {
-            this.b1_jump_duration += dt;
-            b1_y_trans = 1+ v_y * this.b1_jump_duration - 4.9 * this.b1_jump_duration*this.b1_jump_duration;
-        }
-        if (Math.abs(this.b1_jump_duration - 2) <= 0.001)
-        {
-            this.b1_jumping = false;
-            this.b1_jump_duration = 0;
-        }
-
-        // lol we should've made a beyblade object so we wouldn't be copy pasting code..
-        let b1_translation = Mat4.translation(3*Math.cos(v1 * t),b1_y_trans,2*Math.sin(v1 * t));
-        b1_translation = b1_translation.times(this.b1_collision.mat);
-        let b1_location = b1_translation.times(vec4(0, 0, 0, 1));
-        
-        let b2_translation = Mat4.translation(-2*Math.cos(v2 * -t),1.5,-Math.sin(v2 * -t));
-        b2_translation = b2_translation.times(this.b2_collision.mat);
-        let b2_location = b2_translation.times(vec4(0, 0, 0, 1));
-        
-        // collision detection (move to new function?)
-        if(this.is_colliding(b1_location, b2_location)) {
-            let dx = b1_location[0] - b2_location[0];   // distance in x between the two blades
-            let dz = b1_location[2] - b2_location[2];   // distance in z between the two blades
-            let a = Math.atan(dz / dx);                 // angle of collision
-
-            this.b1_collision.start = t;
-            this.b1_collision.on = true;
-            this.b1_collision.angle = a;
-            this.b1_collision.neg_x = dx > 0 ? 1 : -1;
-            this.b1_collision.neg_z = dz > 0 ? 1 : -1;
-
-            this.b2_collision.start = t;
-            this.b2_collision.on = true;
-            this.b2_collision.angle = a;
-            this.b2_collision.neg_x = dx > 0 ? -1 : 1;
-            this.b2_collision.neg_z = dz > 0 ? -1 : 1;
-        }
-
-        if(this.b1_collision.on && !this.still) {
-            let mult1 = this.b1_collision.mult(t, this.b1_collision.start);
-            let a1 = this.b1_collision.angle;
-            let mult2 = this.b2_collision.mult(t, this.b2_collision.start);
-            let a2 = this.b2_collision.angle;
-
-            if(mult1 === -1) {
-                this.b1_collision.on = false;
-            }
-            else {
-                // continue moving the center of rotation due to a collision
-                this.b1_collision.mat = this.b1_collision.mat
-                                            .times(Mat4.translation(mult1 * this.b1_collision.neg_x * Math.cos(a1), 0, mult1 * this.b1_collision.neg_z * Math.sin(a1)));
-            }
-
-            if(mult2 === -1) {
-                this.b2_collision.on = false;
-            }
-            else {
-                this.b2_collision.mat = this.b2_collision.mat
-                                            .times(Mat4.translation(mult2 * this.b2_collision.neg_x * Math.cos(a2), 0, mult1 * this.b2_collision.neg_z * Math.sin(a2)));
-            }
-        }
-        else if(!this.is_colliding(b1_location, b2_location) && !this.b1_collision.mat.equals(Mat4.identity()) && !this.still) {
-            // gravity towards the center (pushing the beyblades inwards constantly)
-            let b1_ctr = this.b1_collision.mat.times(vec4(0, 0, 0, 1));
-            let b2_ctr = this.b2_collision.mat.times(vec4(0, 0, 0, 1));
-            let g_factor = 0.99;
-
-            this.b1_collision.mat = Mat4.translation(b1_ctr[0] * g_factor, 0, b1_ctr[2] * g_factor);
-            this.b2_collision.mat = Mat4.translation(b2_ctr[0] * g_factor, 0, b2_ctr[2] * g_factor);
-        }
-
-        let b1_transform = b1_translation.times(Mat4.rotation(20*t,0,1,0));
-
-        let b2_transform =  b2_translation.times(Mat4.rotation(20*t,0,1,0));
-
-        // this.draw_beyblade(context, program_state, b1_transform,
-        //     this.materials.plastic.override({color : color (0.69,0.42,0.1,1)}),
-        //     this.materials.rings);
-        //
-        // this.draw_beyblade(context, program_state, b2_transform,
-        //     this.materials.plastic.override({color : color (1,0.42,0.1,1)}),
-        //     this.materials.star_texture);
     }
 }
 
