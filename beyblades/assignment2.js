@@ -33,7 +33,7 @@ class Base_Scene extends Scene {
         };
 
         this.time = 0;
-        this.still = false;
+        this.still = true;
         this.b1_jumping = false;
         this.b1_jump_duration = 0;
 
@@ -73,6 +73,13 @@ class Base_Scene extends Scene {
                 return collision_multiplier * Math.log2((t_cur - t_start) / collision_time + 1) + collision_multiplier;
             } 
         };
+
+        this.beyblades = [new beyblade(
+            this.materials.plastic, this.materials.plastic,3,2,5,20,true
+        ),
+        new beyblade(
+             this.materials.plastic, this.materials.plastic,2,-1,3,-20,false
+        )]
     }
 
     display(context, program_state) {
@@ -93,6 +100,92 @@ class Base_Scene extends Scene {
     }
 }
 
+class beyblade{
+    constructor(base_material, top_material, orbitx, orbitz, v_o, rot_speed,player)
+    {
+        this.transform = Mat4.translation(orbitx,0,orbitz);
+        this.materials = {base: base_material, top: top_material};
+        this.orbit = {x: orbitx, z : orbitz, speed: v_o};
+        this.time = 0;
+        this.rot_speed = rot_speed;
+        this.still = true;
+        this.jumping = false;
+        this.isplayer = player
+        this.jump_duration = 0;
+        this.v_y = 10
+        this.g = 30
+        this.collision = {
+            on: false,
+            direction: vec4(0,0,0,0),
+            duration: 0,
+            max_duration: 0.1,
+            multiplier: 0.08,
+            matrix: Mat4.identity(),
+        };
+    }
+
+    update(collider,dt)
+    {
+        if(!this.still)
+        {
+            let b_y_trans = 1.5;
+            if (this.jumping)
+            {
+                this.jump_duration += dt;
+                b_y_trans += this.v_y * this.jump_duration - this.g/2 * Math.pow(this.jump_duration,2);
+            }
+            if (Math.abs(this.jump_duration - 2*this.v_y/this.g) <= 0.001)
+            {
+                this.jumping = false;
+                this.jump_duration = 0;
+            }
+
+            this.time += dt;
+            let t =  this.time;
+
+            let b_trans = Mat4.translation(
+                this.orbit.x*Math.cos(this.orbit.speed * t),
+                b_y_trans,
+                this.orbit.z*Math.sin(this.orbit.speed * t));
+
+            //this.transform = b_trans;
+            b_trans = b_trans.times(this.collision.matrix);
+
+            let dv = this.transform.times(vec4(0,0,0,1)).minus(collider);
+            let iscolliding = dv.norm() <= 3;
+            if(iscolliding){
+                this.collision.on = true;
+                this.collision.direction = dv.normalized();
+            }
+            if(this.collision.on && !this.still) {
+                if(this.collision.duration > this.collision.max_duration){
+                    this.collision.on = false;
+                    this.collision.duration = 0;
+                }
+                else{
+                    this.collision.duration += dt;
+                    let mult = this.collision.multiplier*Math.log2(this.collision.duration/this.collision.max_duration + 1) + this.collision.multiplier;
+                    this.collision.matrix = this.collision.matrix.times(Mat4.translation(
+                        mult*this.collision.direction[0],
+                        0,
+                        mult*this.collision.direction[2]
+                    ));
+                }
+            }
+            else if(!iscolliding && !this.collision.matrix.equals(Mat4.identity())) {
+                // gravity towards the center (pushing the beyblades inwards constantly)
+                let ctr = this.collision.matrix.times(vec4(0, 0, 0, 1));
+                let g_factor = 0.99;
+
+                this.collision.matrix = Mat4.translation(ctr[0] * g_factor, 0, ctr[2] * g_factor);
+            }
+
+
+            this.transform = b_trans.times(Mat4.rotation(this.rot_speed*t,0,1,0));
+        }
+    }
+}
+
 export class Assignment2 extends Base_Scene {
     /**
      * This Scene object can be added to any display canvas.
@@ -103,12 +196,17 @@ export class Assignment2 extends Base_Scene {
 
     make_control_panel() {
         this.key_triggered_button("Sit still", ["m"], ()=>{
+            for(let i = 0; i < this.beyblades.length; i++){
+                this.beyblades[i].still ^= 1;
+            }
             this.still ^= 1;
         }
         );
         this.key_triggered_button("B1 Jump", ["j"], ()=>{
-            if(this.b1_jump_duration == 0)
-                this.b1_jumping ^= 1;
+            for(let i = 0; i < this.beyblades.length; i++){
+                if(this.beyblades[i].isplayer && !this.beyblades[i].jumping)
+                    this.beyblades[i].jumping ^= 1;
+            }
         }
         );
     }
@@ -136,6 +234,15 @@ export class Assignment2 extends Base_Scene {
         let b1_y_trans = 1.5;
 
         super.display(context, program_state);
+        for(let i = 0; i < this.beyblades.length; i++)
+        {
+            this.draw_beyblade(context,program_state,this.beyblades[i].transform,
+                this.beyblades[i].materials.base,
+                this.beyblades[i].materials.top);
+
+            let collider = this.beyblades[1-i].transform.times(vec4(0,0,0,1));
+            this.beyblades[i].update(collider,dt);
+        }
         let model_transform = Mat4.identity();
         model_transform = model_transform.times(Mat4.rotation(Math.PI / 2,1,0,0));
         model_transform = model_transform.times(Mat4.scale(10,10,1));
@@ -221,13 +328,13 @@ export class Assignment2 extends Base_Scene {
 
         let b2_transform =  b2_translation.times(Mat4.rotation(20*t,0,1,0));
 
-        this.draw_beyblade(context, program_state, b1_transform,
-            this.materials.plastic.override({color : color (0.69,0.42,0.1,1)}),
-            this.materials.rings);
-
-        this.draw_beyblade(context, program_state, b2_transform,
-            this.materials.plastic.override({color : color (1,0.42,0.1,1)}),
-            this.materials.star_texture);
+        // this.draw_beyblade(context, program_state, b1_transform,
+        //     this.materials.plastic.override({color : color (0.69,0.42,0.1,1)}),
+        //     this.materials.rings);
+        //
+        // this.draw_beyblade(context, program_state, b2_transform,
+        //     this.materials.plastic.override({color : color (1,0.42,0.1,1)}),
+        //     this.materials.star_texture);
     }
 }
 
