@@ -239,7 +239,7 @@ export class Assignment2 extends Base_Scene {
      */
 
     make_control_panel() {
-        this.key_triggered_button("Sit still", ["m"], ()=>{
+        this.key_triggered_button("Toggle Pause", ["m"], ()=>{
             for(let i = 0; i < this.beyblades.length; i++){
                 this.beyblades[i].still ^= 1;
             }
