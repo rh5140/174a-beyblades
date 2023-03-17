@@ -286,6 +286,7 @@ export class Assignment2 extends Base_Scene {
                     new beyblade(
                         this.materials.plastic.override({color: color(0.42,0.69,1,1)}), this.materials.rings,2,-1,3,-20,false
                     )]
+                this.beyarena = new arena();
         }
         );
         this.new_line();
