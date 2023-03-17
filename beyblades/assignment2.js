@@ -15,7 +15,9 @@ class Base_Scene extends Scene {
             'arena': new defs.Rounded_Capped_Cylinder(30, 30),
             'cylinder' : new defs.Capped_Cylinder(1,6),
             'cone': new defs.Closed_Cone(15, 6),
+            'background': new defs.Subdivision_Sphere(4),
         };
+        this.shapes.background.arrays.texture_coord.forEach(p => p.scale_by(3));
 
         // *** Materials
         this.materials = {
@@ -30,6 +32,11 @@ class Base_Scene extends Scene {
                 texture: new Texture("assets/stars.png","NEAREST")
             }),
             rings: new Material(new Ring_Shader(),),
+            fire_texture: new Material(new defs.Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1, diffusivity: 1, specularity: 1,
+                texture: new Texture("assets/fire.jpg", "LINEAR_MIPMAP_LINEAR")
+            }),
         };
 
         //this.time = 0;
@@ -82,6 +89,11 @@ class Base_Scene extends Scene {
         )]
 
         this.initial_camera = Mat4.translation(0, 0, -30).times(Mat4.rotation(Math.PI/4, 1, 0, 0));
+
+        this.fire_transform = Mat4.scale(50,50,50);
+
+        this.bgm = new Audio();
+        this.bgm.src = 'assets/turbo.mp3';
     }
 
     display(context, program_state) {
@@ -212,6 +224,7 @@ export class Assignment2 extends Base_Scene {
             for(let i = 0; i < this.beyblades.length; i++){
                 this.beyblades[i].still ^= 1;
             }
+            this.bgm.play();
         }
         );
         this.key_triggered_button("B1 Jump", ["j"], ()=> {
@@ -303,7 +316,8 @@ export class Assignment2 extends Base_Scene {
         
         this.shapes.arena.draw(context, program_state, model_transform, this.materials.plastic);
 
-
+        this.fire_transform = this.fire_transform.times(Mat4.rotation(dt * Math.PI / 6, 0, 1, 0));
+        this.shapes.background.draw(context, program_state, this.fire_transform, this.materials.fire_texture);
     }
 }
 
