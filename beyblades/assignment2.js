@@ -80,6 +80,8 @@ class Base_Scene extends Scene {
         new beyblade(
              this.materials.plastic.override({color: color(0.42,0.69,1,1)}), this.materials.rings,2,-1,3,-20,false
         )]
+
+        this.initial_camera = Mat4.translation(0, 0, -30).times(Mat4.rotation(Math.PI/4, 1, 0, 0));
     }
 
     display(context, program_state) {
@@ -229,11 +231,52 @@ export class Assignment2 extends Base_Scene {
         }
         );
         this.new_line();
-        this.key_triggered_button("R-", ["q"])
-        const speed_controls = this.control_panel.appendChild(document.createElement("span"));
+        this.key_triggered_button("R-", ["u"], ()=>{
+           let R = this.beyblades[0].materials.base.color;
+           if(R[0] > 0)
+               R[0] = Math.max(0, R[0] - 0.01);
+        });
+        const red_controls = this.control_panel.appendChild(document.createElement("span"));
         this.live_string(box => {
-            box.textContent = "Speed: "
-        }, speed_controls);
+            box.textContent = "R: "+ this.beyblades[0].materials.base.color[0].toFixed(2);
+        }, red_controls);
+        this.key_triggered_button("R+", ["i"], ()=>{
+            let R = this.beyblades[0].materials.base.color;
+            if(R[0] < 1)
+                R[0] = Math.min(1, R[0] + 0.01);
+        });
+
+        this.new_line();
+        this.key_triggered_button("G-", ["k"], ()=>{
+            let R = this.beyblades[0].materials.base.color;
+            if(R[1] > 0)
+                R[1] = Math.max(0, R[1] - 0.01);
+        });
+        const green_controls = this.control_panel.appendChild(document.createElement("span"));
+        this.live_string(box => {
+            box.textContent = "G: "+ this.beyblades[0].materials.base.color[1].toFixed(2);
+        }, green_controls);
+        this.key_triggered_button("G+", ["l"], ()=>{
+            let R = this.beyblades[0].materials.base.color;
+            if(R[1] < 1)
+                R[1] = Math.min(1, R[1] + 0.01);
+        });
+
+        this.new_line();
+        this.key_triggered_button("B-", [","], ()=>{
+            let R = this.beyblades[0].materials.base.color;
+            if(R[2] > 0)
+                R[2] = Math.max(0, R[2] - 0.01);
+        });
+        const blue_controls = this.control_panel.appendChild(document.createElement("span"));
+        this.live_string(box => {
+            box.textContent = "B: "+ this.beyblades[0].materials.base.color[2].toFixed(2);
+        }, blue_controls);
+        this.key_triggered_button("B+", ["."], ()=>{
+            let R = this.beyblades[0].materials.base.color;
+            if(R[2] < 2)
+                R[2] = Math.min(1, R[2] + 0.01);
+        });
     }
 
     draw_beyblade(context,program_state,model_transform,base,top) {
@@ -260,7 +303,7 @@ export class Assignment2 extends Base_Scene {
         
         this.shapes.arena.draw(context, program_state, model_transform, this.materials.plastic);
 
-        
+
     }
 }
 

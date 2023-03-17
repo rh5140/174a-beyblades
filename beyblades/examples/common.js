@@ -898,8 +898,8 @@ const Movement_Controls = defs.Movement_Controls =
             this.key_triggered_button("+", ["p"], () =>
                 this.speed_multiplier *= 1.2, undefined, undefined, undefined, speed_controls);
             this.new_line();
-            this.key_triggered_button("Roll left", [","], () => this.roll = 1, undefined, () => this.roll = 0);
-            this.key_triggered_button("Roll right", ["."], () => this.roll = -1, undefined, () => this.roll = 0);
+            this.key_triggered_button("Roll left", ["q"], () => this.roll = 1, undefined, () => this.roll = 0);
+            this.key_triggered_button("Roll right", ["e"], () => this.roll = -1, undefined, () => this.roll = 0);
             this.new_line();
             this.key_triggered_button("(Un)freeze mouse look around", ["f"], () => this.look_around_locked ^= 1, "#8B8885");
             this.new_line();
