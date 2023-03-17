@@ -248,6 +248,16 @@ export class Assignment2 extends Base_Scene {
                 }
             }
         );
+        
+        this.key_triggered_button("B2 Jump", ["c"], ()=> {
+                for (let i = 0; i < this.beyblades.length; i++) {
+                    if (!this.beyblades[i].isplayer && !this.beyblades[i].jumping && !this.beyblades[i].still)
+                        this.beyblades[i].jumping ^= 1;
+                    }
+                }
+            }
+        );
+
         this.key_triggered_button("Arena Jump", ["h"], ()=> {
                 if(!this.beyarena.still) {
                     if (!this.beyarena.jumping) {
@@ -260,6 +270,7 @@ export class Assignment2 extends Base_Scene {
                 }
             }
         );
+                    
         this.key_triggered_button("Reset", ["r"], ()=>{
                 this.beyblades = [new beyblade(
                     this.materials.plastic.override({color: color(0.69,0.42,0.1,1)}), this.materials.star_texture,3,2,5,20,true
