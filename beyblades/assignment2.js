@@ -18,6 +18,7 @@ class Base_Scene extends Scene {
             'background': new defs.Subdivision_Sphere(4),
         };
         this.shapes.background.arrays.texture_coord.forEach(p => p.scale_by(3));
+        this.shapes.arena.arrays.texture_coord.forEach(p=>p.scale_by(0.2));
 
         // *** Materials
         this.materials = {
@@ -37,6 +38,11 @@ class Base_Scene extends Scene {
                 ambient: 1, diffusivity: 1, specularity: 1,
                 texture: new Texture("assets/fire.jpg", "LINEAR_MIPMAP_LINEAR")
             }),
+            rock_texture: new Material(new defs.Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1, diffusivity: 1, specularity: 1,
+                texture: new Texture("assets/rck_2.png","LINEAR_MIPMAP_LINEAR")
+            })
         };
 
         this.beyblades = [new beyblade(
@@ -277,7 +283,7 @@ export class Assignment2 extends Base_Scene {
         model_transform = model_transform.times(Mat4.rotation(Math.PI / 2,1,0,0));
         model_transform = model_transform.times(Mat4.scale(10,10,1));
         
-        this.shapes.arena.draw(context, program_state, model_transform, this.materials.plastic);
+        this.shapes.arena.draw(context, program_state, model_transform, this.materials.rock_texture);
 
         this.fire_transform = this.fire_transform.times(Mat4.rotation(dt * Math.PI / 6, 0, 1, 0));
         this.shapes.background.draw(context, program_state, this.fire_transform, this.materials.fire_texture);
