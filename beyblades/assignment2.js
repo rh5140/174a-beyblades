@@ -134,7 +134,7 @@ class beyblade{
                 this.jump_duration += dt;
                 b_y_trans += this.v_y * this.jump_duration - this.g/2 * Math.pow(this.jump_duration,2);
             }
-            if (Math.abs(this.jump_duration - 2*this.v_y/this.g) <= 0.001)
+            if (this.jump_duration > 2*this.v_y/this.g)
             {
                 this.jumping = false;
                 this.jump_duration = 0;
@@ -199,7 +199,6 @@ export class Assignment2 extends Base_Scene {
             for(let i = 0; i < this.beyblades.length; i++){
                 this.beyblades[i].still ^= 1;
             }
-            this.still ^= 1;
         }
         );
         this.key_triggered_button("B1 Jump", ["j"], ()=>{
