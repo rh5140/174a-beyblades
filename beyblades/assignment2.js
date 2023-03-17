@@ -225,13 +225,7 @@ export class Assignment2 extends Base_Scene {
     }
 
     display(context, program_state) {
-        const t = this.time, dt = program_state.animation_delta_time / 1000;
-        const v1 = 3;
-        const v2 = 5;
-
-        const v_y = 9.8;
-
-        let b1_y_trans = 1.5;
+        const dt = program_state.animation_delta_time / 1000;
 
         super.display(context, program_state);
         for(let i = 0; i < this.beyblades.length; i++)
