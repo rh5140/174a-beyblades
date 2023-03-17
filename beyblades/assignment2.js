@@ -81,11 +81,6 @@ class Base_Scene extends Scene {
              this.materials.plastic.override({color: color(0.42,0.69,1,1)}), this.materials.rings,2,-1,3,-20,false
         )]
 
-        this.fire_transform = Mat4.scale(50,50,50);
-
-        this.bgm = new Audio();
-        this.bgm.src = 'assets/turbo.mp3';
-
         this.initial_camera = Mat4.translation(0, 0, -30).times(Mat4.rotation(Math.PI/4, 1, 0, 0));
     }
 
@@ -309,8 +304,6 @@ export class Assignment2 extends Base_Scene {
         this.shapes.arena.draw(context, program_state, model_transform, this.materials.plastic);
 
 
-        this.fire_transform = this.fire_transform.times(Mat4.rotation(dt * Math.PI / 6, 0, 1, 0));
-        this.shapes.background.draw(context, program_state, this.fire_transform, this.materials.fire_texture);
     }
 }
 
