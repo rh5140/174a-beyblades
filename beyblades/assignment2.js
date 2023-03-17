@@ -228,6 +228,12 @@ export class Assignment2 extends Base_Scene {
                     )]
         }
         );
+        this.new_line();
+        this.key_triggered_button("R-", ["q"])
+        const speed_controls = this.control_panel.appendChild(document.createElement("span"));
+        this.live_string(box => {
+            box.textContent = "Speed: "
+        }, speed_controls);
     }
 
     draw_beyblade(context,program_state,model_transform,base,top) {
