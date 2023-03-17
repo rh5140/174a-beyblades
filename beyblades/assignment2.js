@@ -58,6 +58,7 @@ class Base_Scene extends Scene {
 
         this.fire_transform = Mat4.scale(50,50,50);
 
+        this.first_song = true;
         this.audio = {
             bgm: new Audio(),
             crash: new Audio(),
@@ -243,7 +244,10 @@ export class Assignment2 extends Base_Scene {
                 this.beyblades[i].still ^= 1;
             }
             this.beyarena.still ^= 1;
-            this.audio.bgm.play();
+            if(this.first_song) {
+                this.audio.bgm.play();
+            }
+            this.first_song = false;
         }
         );
         this.key_triggered_button("B1 Jump", ["j"], ()=> {
@@ -365,6 +369,10 @@ export class Assignment2 extends Base_Scene {
     }
 
     display(context, program_state) {
+        if(!this.first_song && this.audio.bgm.currentTime >= this.audio.bgm.duration) {
+            this.audio.bgm.play();
+        }
+
         const dt = program_state.animation_delta_time / 1000;
 
         super.display(context, program_state);
