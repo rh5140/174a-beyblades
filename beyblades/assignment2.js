@@ -105,7 +105,7 @@ class Base_Scene extends Scene {
 class beyblade{
     constructor(base_material, top_material, orbitx, orbitz, v_o, rot_speed,player)
     {
-        this.transform = Mat4.translation(orbitx,0,orbitz);
+        this.transform = Mat4.translation(orbitx,1.5, orbitz);
         this.materials = {base: base_material, top: top_material};
         this.orbit = {x: orbitx, z : orbitz, speed: v_o};
         this.time = 0;
