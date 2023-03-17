@@ -90,7 +90,7 @@ class beyblade{
         this.jumping = false;
         this.isplayer = player;
         this.jump_duration = 0;
-        this.v_y = 10;
+        this.v_y = 15;
         this.g = 30;
         this.out_of_bounds = false;
         this.collision = {
@@ -200,6 +200,13 @@ export class Assignment2 extends Base_Scene {
                 for (let i = 0; i < this.beyblades.length; i++) {
                     if (this.beyblades[i].isplayer && !this.beyblades[i].jumping)
                         this.beyblades[i].jumping ^= 1;
+                }
+            }
+        );
+        this.key_triggered_button("B2 Jump", ["c"], ()=> {
+            for (let i = 0; i < this.beyblades.length; i++) {
+                if (!this.beyblades[i].isplayer && !this.beyblades[i].jumping)
+                    this.beyblades[i].jumping ^= 1;
                 }
             }
         );
