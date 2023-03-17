@@ -119,8 +119,8 @@ class beyblade{
             on: false,
             direction: vec4(0,0,0,0), //the direction of collision, the center of rotation will be moving along this
             duration: 0, //time since collision
-            max_duration: 0.2, //max time for collision
-            multiplier: 0.1, //logarithmic multiplier for collision distance
+            max_duration: 0.1, //max time for collision
+            multiplier: 0.08, //logarithmic multiplier for collision distance
             matrix: Mat4.identity(), //center of rotation (e.g. originally (0,0,0,1) )
         };
     }
@@ -164,7 +164,7 @@ class beyblade{
                     this.collision.on = true;
                     this.collision.direction = dv.normalized();
                     if(this.time > 3)
-                        this.collision.multiplier = Math.random()*0.4 + 0.1;
+                        this.collision.multiplier = Math.random()*0.3 + 0.08;
                 }
                 if(this.collision.on && !this.still) {
                     if(this.collision.duration > this.collision.max_duration){
