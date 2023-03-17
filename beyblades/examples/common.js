@@ -903,7 +903,7 @@ const Movement_Controls = defs.Movement_Controls =
             this.new_line();
             this.key_triggered_button("(Un)freeze mouse look around", ["f"], () => this.look_around_locked ^= 1, "#8B8885");
             this.new_line();
-            this.key_triggered_button("Go to world origin", ["r"], () => {
+            this.key_triggered_button("Go to world origin", ["0"], () => {
                 this.matrix().set_identity(4, 4);
                 this.inverse().set_identity(4, 4)
             }, "#8B8885");
