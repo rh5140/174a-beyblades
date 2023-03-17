@@ -39,48 +39,6 @@ class Base_Scene extends Scene {
             }),
         };
 
-        //this.time = 0;
-        //this.still = true;
-        // this.b1_jumping = false;
-        // this.b1_jump_duration = 0;
-        //
-        // // i only commented b2 for some reason
-        // this.b1_collision = {
-        //     on: false,
-        //     mat: Mat4.identity(),
-        //     angle: 0,
-        //     start: 0,
-        //     neg_x: 1,
-        //     neg_z: 1,
-        //     mult: (t_cur, t_start = 0, collision_time = 0.1, collision_multiplier = 0.08) => {
-        //         if(t_cur - t_start > collision_time) {
-        //             return -1;
-        //         }
-        //
-        //         return collision_multiplier * Math.log2((t_cur - t_start) / collision_time + 1) + collision_multiplier;
-        //     }
-        // };
-        //
-        // this.b2_collision = {
-        //     on: false,  // whether a collision animation is occuring
-        //     mat: Mat4.identity(),   // this matrix represents the translation due to collision (but in reality it's just the translation to the new center of rotation)
-        //     angle: 0,
-        //     start: 0,   // start time of the collision
-        //     neg_x: 1,   // whether to go in positive or negative x direction on collision
-        //     neg_z: 1,   // whether to go in positive or negative z direction on collision
-        //     mult: (t_cur, t_start = 0, collision_time = 0.3, collision_multiplier = 0.1) => {  // these parameters seemed to just work
-        //         // collision_time = length of collision movement in seconds
-        //         // collision_multiplier = how strong the collision should be
-        //
-        //         // if we have surpassed the collision_time, return an indicator that we no longer are in a collision state
-        //         if(t_cur - t_start > collision_time) {
-        //             return -1;
-        //         }
-        //
-        //         return collision_multiplier * Math.log2((t_cur - t_start) / collision_time + 1) + collision_multiplier;
-        //     }
-        // };
-
         this.beyblades = [new beyblade(
             this.materials.plastic.override({color: color(0.69,0.42,0.1,1)}), this.materials.star_texture,3,2,5,20,true
         ),
@@ -137,6 +95,9 @@ class beyblade{
             multiplier: 0.08, //logarithmic multiplier for collision distance
             matrix: Mat4.identity(), //center of rotation (e.g. originally (0,0,0,1) )
         };
+
+        this.crash = new Audio();
+        this.crash.src = 'assets/crash.mp3';
     }
 
     update(collider,dt)
@@ -179,6 +140,8 @@ class beyblade{
                     this.collision.direction = dv.normalized();
                     if(this.time > 3)
                         this.collision.multiplier = Math.random()*0.3 + 0.08;
+
+                    this.crash.play();
                 }
                 if(this.collision.on && !this.still) {
                     if(this.collision.duration > this.collision.max_duration){
