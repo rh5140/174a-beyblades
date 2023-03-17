@@ -15,7 +15,9 @@ class Base_Scene extends Scene {
             'arena': new defs.Rounded_Capped_Cylinder(30, 30),
             'cylinder' : new defs.Capped_Cylinder(1,6),
             'cone': new defs.Closed_Cone(15, 6),
+            'background': new defs.Subdivision_Sphere(4),
         };
+        this.shapes.background.arrays.texture_coord.forEach(p => p.scale_by(3));
 
         // *** Materials
         this.materials = {
@@ -30,49 +32,12 @@ class Base_Scene extends Scene {
                 texture: new Texture("assets/stars.png","NEAREST")
             }),
             rings: new Material(new Ring_Shader(),),
+            fire_texture: new Material(new defs.Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1, diffusivity: 1, specularity: 1,
+                texture: new Texture("assets/fire.jpg", "LINEAR_MIPMAP_LINEAR")
+            }),
         };
-
-        //this.time = 0;
-        //this.still = true;
-        // this.b1_jumping = false;
-        // this.b1_jump_duration = 0;
-        //
-        // // i only commented b2 for some reason
-        // this.b1_collision = {
-        //     on: false,
-        //     mat: Mat4.identity(),
-        //     angle: 0,
-        //     start: 0,
-        //     neg_x: 1,
-        //     neg_z: 1,
-        //     mult: (t_cur, t_start = 0, collision_time = 0.1, collision_multiplier = 0.08) => {
-        //         if(t_cur - t_start > collision_time) {
-        //             return -1;
-        //         }
-        //
-        //         return collision_multiplier * Math.log2((t_cur - t_start) / collision_time + 1) + collision_multiplier;
-        //     }
-        // };
-        //
-        // this.b2_collision = {
-        //     on: false,  // whether a collision animation is occuring
-        //     mat: Mat4.identity(),   // this matrix represents the translation due to collision (but in reality it's just the translation to the new center of rotation)
-        //     angle: 0,
-        //     start: 0,   // start time of the collision
-        //     neg_x: 1,   // whether to go in positive or negative x direction on collision
-        //     neg_z: 1,   // whether to go in positive or negative z direction on collision
-        //     mult: (t_cur, t_start = 0, collision_time = 0.3, collision_multiplier = 0.1) => {  // these parameters seemed to just work
-        //         // collision_time = length of collision movement in seconds
-        //         // collision_multiplier = how strong the collision should be
-        //
-        //         // if we have surpassed the collision_time, return an indicator that we no longer are in a collision state
-        //         if(t_cur - t_start > collision_time) {
-        //             return -1;
-        //         }
-        //
-        //         return collision_multiplier * Math.log2((t_cur - t_start) / collision_time + 1) + collision_multiplier;
-        //     }
-        // };
 
         this.beyblades = [new beyblade(
             this.materials.plastic.override({color: color(0.69,0.42,0.1,1)}), this.materials.star_texture,3,2,5,20,true
@@ -82,6 +47,11 @@ class Base_Scene extends Scene {
         )]
 
         this.initial_camera = Mat4.translation(0, 0, -30).times(Mat4.rotation(Math.PI/4, 1, 0, 0));
+
+        this.fire_transform = Mat4.scale(50,50,50);
+
+        this.bgm = new Audio();
+        this.bgm.src = 'assets/turbo.mp3';
     }
 
     display(context, program_state) {
@@ -125,6 +95,9 @@ class beyblade{
             multiplier: 0.08, //logarithmic multiplier for collision distance
             matrix: Mat4.identity(), //center of rotation (e.g. originally (0,0,0,1) )
         };
+
+        this.crash = new Audio();
+        this.crash.src = 'assets/crash.mp3';
     }
 
     update(collider,dt)
@@ -167,6 +140,8 @@ class beyblade{
                     this.collision.direction = dv.normalized();
                     if(this.time > 3)
                         this.collision.multiplier = Math.random()*0.3 + 0.08;
+
+                    this.crash.play();
                 }
                 if(this.collision.on && !this.still) {
                     if(this.collision.duration > this.collision.max_duration){
@@ -212,6 +187,7 @@ export class Assignment2 extends Base_Scene {
             for(let i = 0; i < this.beyblades.length; i++){
                 this.beyblades[i].still ^= 1;
             }
+            this.bgm.play();
         }
         );
         this.key_triggered_button("B1 Jump", ["j"], ()=> {
@@ -303,7 +279,8 @@ export class Assignment2 extends Base_Scene {
         
         this.shapes.arena.draw(context, program_state, model_transform, this.materials.plastic);
 
-
+        this.fire_transform = this.fire_transform.times(Mat4.rotation(dt * Math.PI / 6, 0, 1, 0));
+        this.shapes.background.draw(context, program_state, this.fire_transform, this.materials.fire_texture);
     }
 }
 
