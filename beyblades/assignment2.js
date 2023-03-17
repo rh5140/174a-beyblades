@@ -110,16 +110,17 @@ class beyblade{
         this.rot_speed = rot_speed;
         this.still = true;
         this.jumping = false;
-        this.isplayer = player
+        this.isplayer = player;
         this.jump_duration = 0;
-        this.v_y = 10
-        this.g = 30
+        this.v_y = 10;
+        this.g = 30;
+        this.out_of_bounds = false;
         this.collision = {
             on: false,
             direction: vec4(0,0,0,0), //the direction of collision, the center of rotation will be moving along this
             duration: 0, //time since collision
-            max_duration: 0.1, //max time for collision
-            multiplier: 0.08, //logarithmic multiplier for collision distance
+            max_duration: 0.2, //max time for collision
+            multiplier: 0.1, //logarithmic multiplier for collision distance
             matrix: Mat4.identity(), //center of rotation (e.g. originally (0,0,0,1) )
         };
     }
@@ -128,60 +129,70 @@ class beyblade{
     {
         if(!this.still)
         {
-            let b_y_trans = 1.5;
-            if (this.jumping)
+            if(this.out_of_bounds)
             {
-                this.jump_duration += dt;
-                b_y_trans += this.v_y * this.jump_duration - this.g/2 * Math.pow(this.jump_duration,2);
+                this.transform = this.transform.times(Mat4.translation(0,-1,0));
             }
-            if (this.jump_duration > 2*this.v_y/this.g)
+            else
             {
-                this.jumping = false;
-                this.jump_duration = 0;
-            }
-
-            this.time += dt;
-            let t =  this.time;
-
-            let b_trans = Mat4.translation(
-                this.orbit.x*Math.cos(this.orbit.speed * t),
-                b_y_trans,
-                this.orbit.z*Math.sin(this.orbit.speed * t));
-
-            //this.transform = b_trans;
-            b_trans = b_trans.times(this.collision.matrix);
-
-            let dv = this.transform.times(vec4(0,0,0,1)).minus(collider);
-            let iscolliding = dv.norm() <= 3;
-            if(iscolliding){
-                this.collision.on = true;
-                this.collision.direction = dv.normalized();
-            }
-            if(this.collision.on && !this.still) {
-                if(this.collision.duration > this.collision.max_duration){
-                    this.collision.on = false;
-                    this.collision.duration = 0;
+                let b_y_trans = 1.5;
+                if (this.jumping)
+                {
+                    this.jump_duration += dt;
+                    b_y_trans += this.v_y * this.jump_duration - this.g/2 * Math.pow(this.jump_duration,2);
                 }
-                else{
-                    this.collision.duration += dt;
-                    let mult = this.collision.multiplier*Math.log2(this.collision.duration/this.collision.max_duration + 1) + this.collision.multiplier;
-                    this.collision.matrix = this.collision.matrix.times(Mat4.translation(
-                        mult*this.collision.direction[0],
-                        0,
-                        mult*this.collision.direction[2]
-                    ));
+                if (this.jump_duration > 2*this.v_y/this.g)
+                {
+                    this.jumping = false;
+                    this.jump_duration = 0;
                 }
+
+                this.time += dt;
+                let t =  this.time;
+
+                let b_trans = Mat4.translation(
+                    this.orbit.x*Math.cos(this.orbit.speed * t),
+                    b_y_trans,
+                    this.orbit.z*Math.sin(this.orbit.speed * t));
+
+                //this.transform = b_trans;
+                b_trans = b_trans.times(this.collision.matrix);
+
+                let dv = this.transform.times(vec4(0,0,0,1)).minus(collider);
+                let iscolliding = dv.norm() <= 3;
+                if(iscolliding){
+                    this.collision.on = true;
+                    this.collision.direction = dv.normalized();
+                    if(this.time > 3)
+                        this.collision.multiplier = Math.random()*0.4 + 0.1;
+                }
+                if(this.collision.on && !this.still) {
+                    if(this.collision.duration > this.collision.max_duration){
+                        this.collision.on = false;
+                        this.collision.duration = 0;
+                    }
+                    else{
+                        this.collision.duration += dt;
+                        let mult = this.collision.multiplier*Math.log2(this.collision.duration/this.collision.max_duration + 1) + this.collision.multiplier;
+                        this.collision.matrix = this.collision.matrix.times(Mat4.translation(
+                            mult*this.collision.direction[0],
+                            0,
+                            mult*this.collision.direction[2]
+                        ));
+                    }
+                }
+                else if(!iscolliding) {
+                    // gravity towards the center (pushing the beyblades inwards constantly)
+                    let ctr = this.collision.matrix.times(vec4(0, 0, 0, 1));
+                    let g_factor = 0.99;
+
+                    this.collision.matrix = Mat4.translation(ctr[0] * g_factor, 0, ctr[2] * g_factor);
+                }
+
+                this.transform = b_trans.times(Mat4.rotation(this.rot_speed*t,0,1,0));
             }
-            else if(!iscolliding) {
-                // gravity towards the center (pushing the beyblades inwards constantly)
-                let ctr = this.collision.matrix.times(vec4(0, 0, 0, 1));
-                let g_factor = 0.99;
-
-                this.collision.matrix = Mat4.translation(ctr[0] * g_factor, 0, ctr[2] * g_factor);
-            }
-
-
-            this.transform = b_trans.times(Mat4.rotation(this.rot_speed*t,0,1,0));
+            if(this.transform.times(vec4(0,0,0,1)).minus(vec4(0,0,0,1)).norm() > 10)
+                this.out_of_bounds = true;
         }
     }
 }
@@ -224,14 +235,6 @@ export class Assignment2 extends Base_Scene {
         this.shapes.cylinder.draw(context,program_state,model_transform.times(Mat4.translation(0,0.5,0).times(Mat4.scale(1.5,0.4,1.5)).times(Mat4.rotation(Math.PI/2,1,0,0))),top);
     }
 
-    is_colliding(b1_location, b2_location, threshold=3) {
-        //threshold should be 1.5 + 1.5 = 3 since the radii are 1.5
-        let v = b1_location.minus(b2_location);
-        if(v.norm() <= threshold)
-            return true;
-        return false;
-    }
-
     display(context, program_state) {
         const dt = program_state.animation_delta_time / 1000;
 
@@ -250,6 +253,8 @@ export class Assignment2 extends Base_Scene {
         model_transform = model_transform.times(Mat4.scale(10,10,1));
         
         this.shapes.arena.draw(context, program_state, model_transform, this.materials.plastic);
+
+        
     }
 }
 
